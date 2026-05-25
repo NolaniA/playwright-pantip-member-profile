@@ -20,10 +20,3 @@ test('go to settings/profile from direct url', async ({ page, memberId }) => {
 
 });
 
-test('delete image profile with offline', async ({ page }) => {
-  await page.goto('/settings/profile', { waitUntil: 'domcontentloaded' } );
-  await expect(page).toHaveURL(/\/settings\/profile/);
-
-  
-
-});

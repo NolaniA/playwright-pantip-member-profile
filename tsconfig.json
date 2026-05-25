@@ -3,9 +3,10 @@
 
     "target": "ESNext",
 
-    "module": "CommonJS",
+    "module": "Node16",
 
-    "moduleResolution": "Node",
+    "moduleResolution": "Node16",
+    "ignoreDeprecations": "6.0",
 
     "types": [
       "node",
