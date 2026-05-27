@@ -1,0 +1,73 @@
+{
+    "member_id": 9227706,
+    "nickname": {
+        "nickname_display": "<?></><\\><'><\\\"><$><:><;><,>",
+        "request_nickname_status": "no_permission",
+        "description": "(การเปลี่ยนนามแฝง คุณต้องยืนยันด้วยบัตรประชาชน หรือ World ID)"
+    },
+    "avatar": {
+        "original": "",
+        "large": "",
+        "medium": "",
+        "small": ""
+    },
+    "introduction": "<>\\\"'&{} & \\\"\n&nbsp;\n&amp;\n&quot;",
+    "gender": {
+        "is_show": false,
+        "description": "ไม่แสดงในหน้าโปรไฟล์ของคุณ",
+        "gender_display": "ไม่ระบุ",
+        "items": [
+            {
+                "title": "หญิง",
+                "value": "f",
+                "selected": false
+            },
+            {
+                "title": "ชาย",
+                "value": "m",
+                "selected": false
+            },
+            {
+                "title": "LGBTQ+",
+                "value": "l",
+                "selected": false
+            },
+            {
+                "title": "ไม่ระบุ",
+                "value": "u",
+                "selected": true
+            }
+        ]
+    },
+    "birthday": {
+        "is_show": false,
+        "iso_date": "",
+        "description": "ไม่แสดงในหน้าโปรไฟล์ของคุณ",
+        "birthday_display": "ไม่ระบุ",
+        "show_condition_items": [
+            {
+                "title": "แสดง วัน เดือน ปี",
+                "value": 1,
+                "selected": false
+            },
+            {
+                "title": "แสดง วัน เดือน",
+                "value": 2,
+                "selected": false
+            },
+            {
+                "title": "แสดงเฉพาะปี",
+                "value": 4,
+                "selected": false
+            }
+        ]
+    },
+    "page_meta": {
+        "title": ":: Profile Setting ::",
+        "meta_description": "",
+        "link_canonical": "",
+        "robots": ""
+    },
+    "website": []
+        
+}

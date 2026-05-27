@@ -1,48 +1,132 @@
 import { test, expect } from '../../../fixtures/files.fixture';
-import { AvatarResponse } from '../../../types/avatar.type';
+import { dialogConfirmDeleteImage, deleteProfileImage, dialogErrorDeleteImageFail, setupProfileImage, verifyProfileImage } from '../../../helpers/profile.avatar.helper';
 
 test.setTimeout(15000);
 
-test('delete image profile with offline', async ({ page, context, validFile }) => {
-  await page.goto('/settings/profile', { waitUntil: 'domcontentloaded' } );
-  await expect(page).toHaveURL(/\/settings\/profile/);
+test.describe('Profile Avatar', () => {
 
-  
+  test.describe.configure({ mode: 'default' });
 
-  //setup
-  const prefixSelectorImage = 'div[data-test-id="setting-profile-image"]';
-  const buttonDeleteImage = page.locator(`${prefixSelectorImage} button.pt-del-profile-img.pt-block-invisible`);
-  if (await buttonDeleteImage.count() != 0) {
-    //upload image first
-    const inputFile = page.locator(`${prefixSelectorImage} input#browse-img[type="file"]`);
-    const randomIndex = Math.floor(Math.random() * validFile.length);
-    const selectedFile = validFile[randomIndex];
-    await inputFile.setInputFiles([selectedFile]);
-
-    const [response] = 
-      await Promise.all([
-
-        page.waitForResponse('**/api/files-service/v1.0.0/image_upload/profile/upload**'),
-
-        page.getByRole('button', { name: 'บันทึก' }).click()
-      ]);
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/settings/profile', { waitUntil: 'domcontentloaded' } );
+    await expect(page).toHaveURL(/\/settings\/profile/);
+  });
 
 
-    expect(response.status()).toBe(200); 
-    const avatarJson: AvatarResponse = await response.json() || {};
+  test('delete image profile with offline', async ({ page, context, validFile }) => {
 
+    // setup - upload image first
+    const avatar = await setupProfileImage(page, validFile);
+
+    // simulate offline mode
+    await context.setOffline(true);
+    
+    // delete image and confirm delete
+    await deleteProfileImage(page);
+    await dialogConfirmDeleteImage(page, false, true, false);
+    await dialogErrorDeleteImageFail(page);
+    
+    // restore online mode
+    await context.setOffline(false);
+
+    // verify image still exist
+    await verifyProfileImage(page, avatar);
+
+  });
+
+
+  test('delete image profile and cancel', async ({ page, validFile }) => {
+
+
+    // setup - upload image first
+    const avatar = await setupProfileImage(page, validFile);
+
+    // delete image and cancel delete
+    await deleteProfileImage(page);
+    await dialogConfirmDeleteImage(page, true, false, false);
+
+    // verify image still exist
+    await verifyProfileImage(page, avatar);
+    
+  });
+
+
+  test('delete image profile successfully', async ({ page, validFile }) => {
+
+
+    // setup - upload image first
+    await setupProfileImage(page, validFile);
+
+    // delete image and confirm delete
+    await deleteProfileImage(page);
+    const avatar = await dialogConfirmDeleteImage(page, false, true, true);
+
+    // verify image is deleted
+    await verifyProfileImage(page, avatar);
+
+  });
+
+  test('upload image profile with large file', async ({ page, largeFile, validFile }) => {
+    
+
+    // setup - upload image first
+    const avatar = await setupProfileImage(page, validFile);
+
+    // try to upload image with large file
+    await setupProfileImage(page, largeFile);
+
+
+    // verify image is not changed
+    await verifyProfileImage(page, avatar);
+
+  });
+
+
+  test('upload image profile with invalid file', async ({ page, validFile, invalidFile }) => {
+
+    // setup - upload image first
+    const avatar = await setupProfileImage(page, validFile);
+    
+
+    // try to upload image with invalid file
+    await setupProfileImage(page, invalidFile);
     
 
 
-  }
 
-  //test
-  await context.setOffline(true);
-  
-  // Click    button.pt-del-profile-img
-  //   Dialog Confirm Delete Image    confirm=${True}    wait_api_respone=${False}
-  //   Dialog Error Delete Image Fail
+    // verify image is not changed
+    await verifyProfileImage(page, avatar);
+  });
 
 
-  await context.setOffline(false);
+  test('upload image profile with offline', async ({ page, validFile }) => {
+
+
+    // setup - upload image first
+    const avatar = await setupProfileImage(page, validFile);
+
+    // simulate offline mode
+    await page.context().setOffline(true);
+
+    // try to upload image
+    await setupProfileImage(page, validFile);
+
+
+    // restore online mode
+    await page.context().setOffline(false);
+
+    // verify image is uploaded successfully
+    await verifyProfileImage(page, avatar);
+
+  });
+
+  test('upload image profile with valid file', async ({ page, validFile }) => {
+
+    // setup - upload image first
+    const avatar = await setupProfileImage(page, validFile);
+    
+    // verify image is uploaded successfully
+    await verifyProfileImage(page, avatar);
+  });
+
 });
