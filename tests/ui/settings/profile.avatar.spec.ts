@@ -1,5 +1,6 @@
+import { Page } from '@playwright/test';
 import { test, expect } from '../../../fixtures/files.fixture';
-import { dialogConfirmDeleteImage, deleteProfileImage, dialogErrorDeleteImageFail, setupProfileImage, verifyProfileImage } from '../../../helpers/profile.avatar.helper';
+import { dialogErrorUploadLargeFile, dialogConfirmDeleteImage, deleteProfileImage, dialogErrorDeleteImageFail, setupProfileImage, verifyProfileImage, uploadProfileImage, dialogErrorUploadInvalidFile } from '../../../helpers/profile.avatar.helper';
 
 test.setTimeout(15000);
 
@@ -73,7 +74,8 @@ test.describe('Profile Avatar', () => {
     const avatar = await setupProfileImage(page, validFile);
 
     // try to upload image with large file
-    await setupProfileImage(page, largeFile);
+    await uploadProfileImage(page, largeFile);
+    await dialogErrorUploadLargeFile(page, true);
 
 
     // verify image is not changed
@@ -89,7 +91,8 @@ test.describe('Profile Avatar', () => {
     
 
     // try to upload image with invalid file
-    await setupProfileImage(page, invalidFile);
+    await uploadProfileImage(page, invalidFile);
+    await dialogErrorUploadInvalidFile(page, true);
     
 
 
@@ -109,7 +112,9 @@ test.describe('Profile Avatar', () => {
     await page.context().setOffline(true);
 
     // try to upload image
-    await setupProfileImage(page, validFile);
+    await uploadProfileImage(page, validFile);
+    
+    
 
 
     // restore online mode
@@ -130,3 +135,5 @@ test.describe('Profile Avatar', () => {
   });
 
 });
+
+
