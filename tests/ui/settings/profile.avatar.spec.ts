@@ -1,6 +1,21 @@
 import { Page } from '@playwright/test';
 import { test, expect } from '../../../fixtures/files.fixture';
-import { dialogErrorUploadLargeFile, dialogConfirmDeleteImage, deleteProfileImage, dialogErrorDeleteImageFail, setupProfileImage, verifyProfileImage, uploadProfileImage, dialogErrorUploadInvalidFile } from '../../../helpers/profile.avatar.helper';
+import { 
+  dialogErrorUploadLargeFile, 
+  dialogConfirmDeleteImage, 
+  deleteProfileImage, 
+  dialogErrorDeleteImageFail, 
+  setupProfileImage, 
+  verifyProfileImage, 
+  uploadProfileImage, 
+  dialogErrorUploadInvalidFile, 
+  dialogSaveProfileImageFail,
+  confirmUploadImage,
+  clickSaveImage,
+  uploadImage,
+  dialogModifyProfileImageRotate,
+  dialogModifyProfileImageZoom
+} from '../../../helpers/profile.avatar.helper';
 
 test.setTimeout(15000);
 
@@ -12,6 +27,7 @@ test.describe('Profile Avatar', () => {
     await page.goto('/settings/profile', { waitUntil: 'domcontentloaded' } );
     await expect(page).toHaveURL(/\/settings\/profile/);
   });
+  
 
 
   test('delete image profile with offline', async ({ page, context, validFile }) => {
@@ -113,8 +129,8 @@ test.describe('Profile Avatar', () => {
 
     // try to upload image
     await uploadProfileImage(page, validFile);
-    
-    
+    await clickSaveImage(page);
+    await dialogSaveProfileImageFail(page);
 
 
     // restore online mode
@@ -127,11 +143,15 @@ test.describe('Profile Avatar', () => {
 
   test('upload image profile with valid file', async ({ page, validFile }) => {
 
-    // setup - upload image first
-    const avatar = await setupProfileImage(page, validFile);
+
+    for (const file of validFile) {
+      await uploadImage(page, file);
+      await dialogModifyProfileImageZoom(page);
+      await dialogModifyProfileImageRotate(page);
+      const avatar = await confirmUploadImage(page);
+      await verifyProfileImage(page, avatar);
+    }
     
-    // verify image is uploaded successfully
-    await verifyProfileImage(page, avatar);
   });
 
 });

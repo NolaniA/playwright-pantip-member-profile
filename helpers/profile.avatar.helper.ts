@@ -2,35 +2,106 @@ import { AvatarResponse } from '../types/avatar.type';
 import { expect } from '../fixtures/files.fixture';
 import type { Page } from 'playwright';
 
-const prefixSelectorImage = 'div[data-test-id="setting-profile-image"]';
+const prefixSelectorAvatarSection = 'div[data-test-id="setting-profile-image"]';
 	
 export async function setupProfileImage(page: Page, validFile: string[] = []) { 
-  //upload image first
-	const inputFile = page.locator(`${prefixSelectorImage} input#browse-img[type="file"]`);
+    //upload image first
 	const randomIndex = Math.floor(Math.random() * validFile.length);
 	const selectedFile = validFile[randomIndex];
-	await inputFile.setInputFiles(selectedFile);
+	await uploadImage(page, selectedFile);
 
 	// zoom in-out image
-	await dialogModifyProfileImage(page);
+	await dialogModifyProfileImageZoom(page);
+
+	// random rotate
+	await dialogModifyProfileImageRotate(page);
 
 	// save image and wait for response
-	const [response] = 
-		await Promise.all([
-
-			page.waitForResponse('**/api/files-service/v1.0.0/image_upload/profile/upload**'),
-
-			page.getByRole('button', { name: 'บันทึก' }).click()
-		]);
-
-
-	expect(response.status()).toBe(200); 
-	const json = await response.json();
-	const avatarJson: AvatarResponse = json.data;
+	const avatarJson = await confirmUploadImage(page);
 	return avatarJson;
 }
 
-export async function dialogModifyProfileImage(page: Page, zoom_in: boolean = false, zoom_out: boolean = false) {	
+export async function uploadImage(page: Page, file: string) {
+	const inputFile = page.locator(`${prefixSelectorAvatarSection} input#browse-img[type="file"]`);
+	await inputFile.setInputFiles(file);
+}
+
+export async function confirmUploadImage(
+  page: Page
+): Promise<AvatarResponse> {
+
+  const [response] = await Promise.all([
+    page.waitForResponse(
+      '**/api/files-service/v1.0.0/image_upload/profile/upload**'
+    ),
+    page.getByRole('button', {
+      name: 'บันทึก'
+    }).click()
+  ]);
+
+  expect(response.status()).toBe(200);
+
+  const json = await response.json();
+
+  return json.data;
+}
+export async function clickSaveImage(page: Page) {
+  await page.getByRole('button', {
+    name: 'บันทึก'
+  }).click();
+}
+
+
+// export async function confirmUploadImage(
+//   page: Page,
+//   wait_api_response = true
+// ): Promise<AvatarResponse | undefined> {
+
+//   if (!wait_api_response) {
+//     await page.getByRole('button', {
+//       name: 'บันทึก'
+//     }).click();
+
+//     return undefined;
+//   }
+
+//   const [response] = await Promise.all([
+//     page.waitForResponse(
+//       '**/api/files-service/v1.0.0/image_upload/profile/upload**'
+//     ),
+//     page.getByRole('button', {
+//       name: 'บันทึก'
+//     }).click()
+//   ]);
+
+//   expect(response.status()).toBe(200);
+
+//   const json = await response.json();
+
+//   return json.data as AvatarResponse;
+// }
+
+
+export async function dialogModifyProfileImageRotate(page: Page) {
+
+	const dialog = page.locator('div[data-test-id="dialog-modify-profile-image"]');
+	await dialog.waitFor({ state:'attached' });
+
+	const buttonRotate = dialog.locator('a[title="หมุน 90˚"]')
+	await buttonRotate.waitFor({ state:'attached' });
+
+	// random rotate
+	const countRotate = Math.floor( Math.random() * 5 );
+
+	for (let i = countRotate; i >= 1 ; i--){
+		await buttonRotate.click();
+	}
+
+	return	countRotate
+}
+
+
+export async function dialogModifyProfileImageZoom(page: Page, zoom_in: boolean = false, zoom_out: boolean = false) {	
 
 	const dialog = page.locator('div[data-test-id="dialog-modify-profile-image"]');
 	await dialog.waitFor({ state: 'attached' });
@@ -70,7 +141,7 @@ export async function verifyProfileImage(page: Page, avatar: AvatarResponse) {
 	const avatarUrlDefault: string = 'https://stg.ptcdn.info/images/avatar_member_default.png';
 
 	// large avatar in profile page
-	const image = page.locator(`${prefixSelectorImage} img`);
+	const image = page.locator(`${prefixSelectorAvatarSection} img`);
 	await image.waitFor({ state: 'attached' });
 	await expect(image).toHaveAttribute('src', avatar.avatar.large || avatarUrlDefault);
 
@@ -81,7 +152,7 @@ export async function verifyProfileImage(page: Page, avatar: AvatarResponse) {
 }
 
 export async function deleteProfileImage(page: Page) {
-	const buttonDeleteImage = page.locator(`${prefixSelectorImage} button.pt-del-profile-img`);
+	const buttonDeleteImage = page.locator(`${prefixSelectorAvatarSection} button.pt-del-profile-img`);
 	await buttonDeleteImage.waitFor({ state: 'attached' });
 	await buttonDeleteImage.click();
 }
@@ -184,7 +255,7 @@ export async function dialogErrorDeleteImageFail(page: Page, close: boolean = tr
 
 
 // export async function uploadProfileImage(page: Page, filePath: string) {
-// 	const inputFile = page.locator(`${prefixSelectorImage} input#browse-img[type="file"]`);
+// 	const inputFile = page.locator(`${prefixSelectorAvatarSection} input#browse-img[type="file"]`);
 // 	await inputFile.setInputFiles(filePath);	
 
 // }
@@ -315,6 +386,9 @@ export async function dialogEditProfileImage(page: Page, close:boolean = false, 
   
 }
 
+
+
+
 // Dialog Edit Profile Image
 //     [Arguments]    ${close_dialog}=${False}    ${confirm_save}=${False}    ${wait_api_respone}=${True}
 //     ${prefix_selector}    Set Variable    div[data-test-id="dialog-modify-profile-image"]
@@ -389,46 +463,44 @@ export async function dialogEditProfileImage(page: Page, close:boolean = false, 
 
 
 export async function uploadProfileImage(page: Page, file:string[] = []) {
-  const inputFile = page.locator(`${prefixSelectorImage} input#browse-img[type="file"]`);
   const randomIndex = Math.floor(Math.random() * file.length);
   const selectedFile = file[randomIndex];
-  await inputFile.setInputFiles(selectedFile);
+  await uploadImage(page, selectedFile)
 
 }
 
 
 
-// Dialog Save Profile Image Fail
-//     [Arguments]    ${close_dialog}=${True}    
-//     ${prefix_selector}    Set Variable    div[data-test-id="dialog-upload-profile-image-fail"]
 
-//     Get Property    ${prefix_selector} div.pt-dialog__heading h5    
-//         ...    innerText    
-//         ...    equal    
-//         ...    อัปโหลดรูปไม่สำเร็จ
+export async function dialogSaveProfileImageFail(page:Page, close:boolean = true) {
+	
+	const dialog = page.locator('div[data-test-id="dialog-upload-profile-image-fail"]');
+	await dialog.waitFor({ state:'attached' });
 
-//     Wait For Elements State    ${prefix_selector} div.pt-dialog__content >> text=ขออภัยมีบางอย่างผิดพลาด ทำให้อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่อีกครั้งในภายหลัง    attached
+	await dialog.locator('div.pt-dialog__heading h5').innerText().then((text) =>{
+		expect(text).toBe('อัปโหลดรูปไม่สำเร็จ')
+	});
 
-//     # Get Property    div.pt-dialog__content    
-//     #     ...    innerText    
-//     #     ...    equal    
-//     #     ...    ขออภัยมีบางอย่างผิดพลาด ทำให้อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่อีกครั้งในภายหลัง
+	await expect(dialog.locator('div.pt-dialog__content')).toHaveText('ขออภัยมีบางอย่างผิดพลาด ทำให้อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่อีกครั้งในภายหลัง');
+	await dialog.getByRole('button', { name: 'ตกลง'}).waitFor({ state: 'attached' });
+	await expect(dialog.locator('div.pt-dialog__heading a i')).toBeVisible();
 
-//     Wait For Elements State    ${prefix_selector} div.pt-dialog__bottom button >> text=ตกลง    attached
-//     Wait For Elements State    ${prefix_selector} div.pt-dialog__heading a i    attached
+	if (!close) return
 
-//     Return From Keyword If    not ${close_dialog}
+	const viewportSize = await page.viewportSize();
 
-//     # close dialog
-//     ${width_screen}    Get Viewport Size    width
-//     ${n}    Set Variable If    ${width_screen} > ${575}    
-//         ...    2    1
+	let choice = viewportSize && viewportSize.width > 575 ? 3 : 2;
 
-//     ${close}    Evaluate    random.randint(0, ${n})
+	const closeOption = Math.floor(Math.random() * choice);
 
-//     Run Keyword If    ${close} == ${0}
-//         ...    Click    ${prefix_selector} div.pt-dialog__bottom button >> text=ตกลง
-//     ...    ELSE IF    ${close} == ${1}    
-//         ...    Click    ${prefix_selector} div.pt-dialog__heading a i
-//     ...    ELSE
-//         ...    Keyboard Key    press    Escape
+	if (closeOption === 0) {
+		await dialog.getByRole('button', { name: 'ตกลง'}).click();
+	} else if (closeOption === 1){
+		await dialog.locator('div.pt-dialog__heading a i').click();
+	} else {
+		await page.keyboard.press('Escape');
+	} 
+
+	expect(dialog).toBeHidden();
+
+}
