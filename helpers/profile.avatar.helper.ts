@@ -1,4 +1,4 @@
-import { AvatarResponse } from '../types/avatar.type';
+import { IAvatarResponse } from '../types/avatar.type';
 import { expect } from '../fixtures/files.fixture';
 import type { Page } from 'playwright';
 
@@ -28,7 +28,7 @@ export async function uploadImage(page: Page, file: string) {
 
 export async function confirmUploadImage(
   page: Page
-): Promise<AvatarResponse> {
+): Promise<IAvatarResponse> {
 
   const [response] = await Promise.all([
     page.waitForResponse(
@@ -55,7 +55,7 @@ export async function clickSaveImage(page: Page) {
 // export async function confirmUploadImage(
 //   page: Page,
 //   wait_api_response = true
-// ): Promise<AvatarResponse | undefined> {
+// ): Promise<IAvatarResponse | undefined> {
 
 //   if (!wait_api_response) {
 //     await page.getByRole('button', {
@@ -78,7 +78,7 @@ export async function clickSaveImage(page: Page) {
 
 //   const json = await response.json();
 
-//   return json.data as AvatarResponse;
+//   return json.data as IAvatarResponse;
 // }
 
 
@@ -136,7 +136,7 @@ export async function dialogModifyProfileImageZoom(page: Page, zoom_in: boolean 
 
 
 
-export async function verifyProfileImage(page: Page, avatar: AvatarResponse) {
+export async function verifyProfileImage(page: Page, avatar: IAvatarResponse) {
 
 	const avatarUrlDefault: string = 'https://stg.ptcdn.info/images/avatar_member_default.png';
 
@@ -197,7 +197,7 @@ export async function dialogConfirmDeleteImage(page: Page, close: boolean = fals
 			]);
 			expect(response.status()).toBe(200);
 			const json = await response.json();
-			const avatarJson: AvatarResponse = json.data;
+			const avatarJson: IAvatarResponse = json.data;
 
 			return avatarJson;
 
@@ -216,7 +216,7 @@ export async function dialogConfirmDeleteImage(page: Page, close: boolean = fals
 						medium: '',
 						small: ''
 				}
-			} as AvatarResponse;
+			} as IAvatarResponse;
 }
 
 		
