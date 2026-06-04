@@ -10,7 +10,7 @@ import {
     confirmSaveBirthday,
     dialogErrorSettingProfile
 
-} from "../../../helpers/profile.birthday.spec";
+} from "../../../helpers/profile.birthday.helper";
 
 test.setTimeout(15000);
 
@@ -28,15 +28,17 @@ test.describe('Profile Birthday', () => {
       // setup birthday
       const birthday = await setupProfileBirthday(page); 
 
+
       await context.setOffline(true);
 
       await clickBirthdaySection(page);
       await dialogEditBirthday(page);
-      await dialogSelectDayBirthday(page, randomPastTime);
-      await dialogSelectMonthBirthday(page, randomPastTime);
       await dialogSelectYearBirthday(page, randomPastTime);
+      await dialogSelectMonthBirthday(page, randomPastTime);
+      await dialogSelectDayBirthday(page, randomPastTime);
       await confirmSaveBirthday(page, false);
       await dialogErrorSettingProfile(page, true);
+      await dialogEditBirthday(page, true);
 
       await context.setOffline(false);
 

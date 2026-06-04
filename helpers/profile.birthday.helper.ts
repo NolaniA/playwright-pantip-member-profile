@@ -1,11 +1,11 @@
-import { expect } from '../fixtures/time.fixture';
+import { expect, thaiNow } from '../fixtures/time.fixture';
 import type { Page } from 'playwright';
 import { IBirthDayResponse } from '../types/birthday.type';
 import dayjs from 'dayjs';
 
 const prefixSelectorBirthdaySection = 'a[data-test-id="setting-profile-birthday"]';
 
-
+const currentTime = thaiNow();
 
 export async function verifyProfileBirthday(page: Page, birthday:IBirthDayResponse) {
 
@@ -42,7 +42,7 @@ export async function clickBirthdaySection(page:Page) {
   await page.locator(prefixSelectorBirthdaySection).click();
 }
 
-export async function dialogEditBirthday(page:Page) {
+export async function dialogEditBirthday(page:Page, close:boolean = false, expect_date: dayjs.Dayjs = dayjs() ) {
   const dialog = page.locator('div[data-test-id="dialog-setting-birthday"]');
   await dialog.waitFor({ state:'attached' });
 
@@ -72,8 +72,28 @@ export async function dialogEditBirthday(page:Page) {
   // await dialog.locator('div.row.pt-birthday-setting > div:nth-child(3) label.select').waitFor({ state:'attached' });
   // await dialog.locator('section:nth-child(3) > div.flexbox > div > label').waitFor({ state:'attached' });
 
+  if (expect_date){
+    const unixCurrentTime = currentTime.unix();
+    const unixExpectTime = expect_date.unix();
 
-     
+    const displayTime = unixExpectTime > unixCurrentTime ? currentTime : expect_date;
+
+
+  }
+
+  if (!close) return;
+
+  const width_screen = (await page.viewportSize())?.width ?? 0;
+  const choice = Math.floor(Math.random() * 3);
+
+  if (width_screen < 575) {
+    await dialog.locator('div.pt-dialog__heading a.pt-sm-toggle-hide i').click();
+  } else if (choice === 0) {
+    await dialog.locator('div.pt-dialog__heading a.pt-sm-toggle-show i').click();
+  } else {
+    await page.keyboard.press('Escape');
+  
+  }
     
 }
 
@@ -112,7 +132,8 @@ export async function dialogSelectFormatBirthday(page:Page, day_month_year:boole
 
   const valueSelect = await select.inputValue();
 
-  const availableValues = ['1', '2', '3', '4'];
+  const availableValues = ['1', '2', '4'];
+  // const availableValues = ['1', '2', '3', '4'];
 
   const candidateValues = availableValues.filter( v => v !== valueSelect );
 
@@ -214,42 +235,7 @@ export async function dialogErrorSettingProfile(page:Page, close_dialog:boolean 
 
 
 
-// Dialog Select Month Birthday
-//     [Arguments]    ${string}
-//     # convert 01 to 1
-//     ${int}    Evaluate    str(int("${string}"))
 
-//     ${choice}    Evaluate    random.randint(0, 1)
-//     Run Keyword If    ${choice} == ${0}
-//     ...    Select Options By    div.row.pt-birthday-setting > div:nth-child(2) > label.select > select    value    ${int}
-    
-//     IF    ${choice} == ${1}
-//         # ${month}    Get From Dictionary    ${FULL_THAI_MONTHS}    ${string}
-//         # Click    div.row.pt-birthday-setting > div:nth-child(2) > label.select > select
-//         # @{char}    Split String To Characters    ${month}
-//         # FOR    ${i}    IN    @{char}
-//         #     Keyboard Input    innerText    ${i}
-//         # END
-//         # Keyboard Key    press    Enter
-
-//         Click    div.row.pt-birthday-setting > div:nth-child(2) > label.select > select
-//         # reset month to jan
-//         FOR    ${i}    IN RANGE    12
-//             Keyboard Key    press    ArrowUp
-//         END
-
-//         FOR    ${i}    IN RANGE    1    ${int}
-//             Keyboard Key    press    ArrowDown
-//         END
-//         Keyboard Key    press    Enter
-
-//     END
-
-//     Get Selected Options    
-//     ...    div.row.pt-birthday-setting > div:nth-child(2) > label.select > select    
-//     ...    value    
-//     ...    equal    
-//     ...    ${int}
 // Dialog Edit Birthday
 //     [Arguments]    ${close_dialog}=${False}    ${confirm_save}=${False}    ${wait_api_respone}=${True}
 

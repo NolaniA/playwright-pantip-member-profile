@@ -24,7 +24,9 @@ type ThaiTimeFixture = {
   
 };
 
-const thaiNow = () => dayjs().tz('Asia/Bangkok');
+export const thaiNow = () => dayjs().tz('Asia/Bangkok');
+
+
 
 export const test = base.extend<ThaiTimeFixture>({
   currentTime: async ({}, use) => {
