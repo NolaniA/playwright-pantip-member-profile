@@ -3,9 +3,26 @@ import type { Page } from 'playwright';
 import { IBirthDayResponse } from '../types/birthday.type';
 import dayjs from 'dayjs';
 
+const currentTime = thaiNow();
+
 const prefixSelectorBirthdaySection = 'a[data-test-id="setting-profile-birthday"]';
 
-const currentTime = thaiNow();
+const fullThaiMonths = {
+    "01":"มกราคม",
+    "02":"กุมภาพันธ์",
+    "03":"มีนาคม",
+    "04":"เมษายน",
+    "05":"พฤษภาคม",
+    "06":"มิถุนายน",
+    "07":"กรกฎาคม",
+    "08":"สิงหาคม",
+    "09":"กันยายน",
+    "10":"ตุลาคม",
+    "11":"พฤศจิกายน",
+    "12":"ธันวาคม"
+}
+
+
 
 export async function verifyProfileBirthday(page: Page, birthday:IBirthDayResponse) {
 
@@ -42,24 +59,27 @@ export async function clickBirthdaySection(page:Page) {
   await page.locator(prefixSelectorBirthdaySection).click();
 }
 
-export async function dialogEditBirthday(page:Page, close:boolean = false, expect_date: dayjs.Dayjs = dayjs() ) {
+export async function dialogEditBirthday(page:Page, 
+  close:boolean = false, 
+  expect_date: dayjs.Dayjs | null = null, 
+  expect_show:boolean | null = null, 
+  expect_format:'day_month_year' | 'day_month' | 'year' | 'not_show' | null = null) {
+
   const dialog = page.locator('div[data-test-id="dialog-setting-birthday"]');
   await dialog.waitFor({ state:'attached' });
 
-  const dialog_title = dialog.locator('div.pt-dialog__heading h5');
-  await dialog_title.innerText()
-    .then((text) => {expect(text).toBe('วันเกิด')});    
-  // await dialog_title.locator('a.pt-sm-toggle-hide i').innerText()
-  //   .then((text) => {expect(text).toBe('arrow_back')});
-  // await dialog_title.locator('a.pt-sm-toggle-show i').innerText()
-  //   .then((text) => {expect(text).toBe('clear')});
+  const dialog_title = dialog.locator('div.pt-dialog__heading');
+  expect(await dialog_title.locator('h5').innerText()).toBe('วันเกิด');
+  expect(await dialog_title.locator('a.pt-sm-toggle-hide i').innerText()).toBe('arrow_back');
+  expect(await dialog_title.locator('a.pt-sm-toggle-show i').innerText()).toBe('clear');
 
-  // const dialog_content = dialog.locator('div.pt-dialog__content');
-  // await dialog_content.locator('text=วันเดือนปีเกิด').waitFor({ state:'attached' });
-  // await dialog_content.locator('text=วัน').waitFor({ state:'attached' });
-  // await dialog_content.locator('text=เดือน').waitFor({ state:'attached' });
-  // await dialog_content.locator('text=ปี').waitFor({ state:'attached' });
-  // await dialog_content.locator('text=แสดงวันเกิดในข้อมูลส่วนตัว').waitFor({ state:'attached' });
+
+  const dialog_content = dialog.locator('div.pt-dialog__content');
+  await dialog_content.locator('text="วันเดือนปีเกิด"').waitFor({ state:'attached' });
+  await dialog_content.locator('text="วัน"').waitFor({ state:'attached' });
+  await dialog_content.locator('text="เดือน"').waitFor({ state:'attached' });
+  await dialog_content.locator('text="ปี"').waitFor({ state:'attached' });
+  await dialog_content.locator('text=แสดงวันเกิดในข้อมูลส่วนตัว').waitFor({ state:'attached' });
 
   await dialog.locator('button[title="บันทึกข้อมูลวันเกิด"]').waitFor({ state:'attached' }); 
   
@@ -72,13 +92,33 @@ export async function dialogEditBirthday(page:Page, close:boolean = false, expec
   // await dialog.locator('div.row.pt-birthday-setting > div:nth-child(3) label.select').waitFor({ state:'attached' });
   // await dialog.locator('section:nth-child(3) > div.flexbox > div > label').waitFor({ state:'attached' });
 
+  if (expect_format) {
+    const value_format = expect_format === 'day_month_year' ? '1' : expect_format === 'day_month' ? '2' : expect_format === 'year' ? '4' : '3';
+    await expect(dialog.locator('form > div > section:nth-child(1) select')).toHaveValue(value_format);
+  }
+
   if (expect_date){
     const unixCurrentTime = currentTime.unix();
     const unixExpectTime = expect_date.unix();
 
     const displayTime = unixExpectTime > unixCurrentTime ? currentTime : expect_date;
 
+    const yearDisplay = displayTime.year();
+    const monthDisplay = displayTime.format('M');
+    const dayDisplay = displayTime.date();
+    console.log('yearDisplay', yearDisplay);
+    console.log('monthDisplay', monthDisplay);
+    console.log('dayDisplay', dayDisplay);
 
+    expect(await page.getByLabel('-วัน-').inputValue()).toBe(dayDisplay.toString());
+    expect(await page.getByLabel('-เดือน-').inputValue()).toBe(monthDisplay.toString());
+    expect(await page.getByLabel('-ปี-').inputValue()).toBe(yearDisplay.toString()); 
+
+  }
+
+  if (expect_show !== null) {
+    const isChecked = await dialog.locator('section:nth-child(3) > div.flexbox > div > label > input[type="checkbox"]').isChecked();
+    expect(isChecked).toBe(expect_show);
   }
 
   if (!close) return;
@@ -124,7 +164,12 @@ export async function confirmSaveBirthday(page:Page, wait_api_respone:boolean = 
 }
 
 
-export async function dialogSelectFormatBirthday(page:Page, day_month_year:boolean = false, day_month:boolean = false, year:boolean = false, not_show:boolean = false) {
+export async function dialogSelectFormatBirthday(
+  page:Page, 
+  day_month_year:boolean = false, 
+  day_month:boolean = false, 
+  year:boolean = false, 
+  not_show:boolean = false) {
   const dialog = page.locator('div[data-test-id="dialog-setting-birthday"]');
   await dialog.waitFor({ state:'attached' });
 
@@ -162,9 +207,10 @@ export async function dialogSelectShowBirthday(page:Page, show:boolean = false) 
 
   if (!show) return;
 
-  const toggleShow = dialog.locator('section:nth-child(3) > div.flexbox > div > label > input[type="checkbox"]');
+  const toggleShow = dialog.locator('input[data-test-id="show-birthday-status-selected"]');
   if (!(await toggleShow.isChecked())) {
-    await toggleShow.check();
+    // await toggleShow.check();
+    await toggleShow.click();
   }
 
   await expect(toggleShow).toBeChecked();
@@ -188,7 +234,7 @@ export async function dialogSelectMonthBirthday(page:Page, target_date: dayjs.Da
 
   const selectDay = dialog.locator('div[data-test-id="month"] label.select > select');
 
-  await selectDay.selectOption({ value: target_date.month().toString() });
+  await selectDay.selectOption({ value: target_date.format('M').toString() });
 
 
 }
@@ -222,7 +268,7 @@ export async function dialogErrorSettingProfile(page:Page, close_dialog:boolean 
   if (width_screen < 575) {
     await dialog.locator('div.pt-dialog__heading a.pt-sm-toggle-hide i').click();
   } else if (choice === 0) {
-    await dialog.locator('div.pt-dialog__heading a.pt-sm-toggle-show i').click();
+    await dialog.locator('div.pt-dialog__heading a i').click();
   } else if (choice === 1) {
     await dialog.locator('div.pt-dialog__bottom button >> text="ตกลง"').click();
   } else {
