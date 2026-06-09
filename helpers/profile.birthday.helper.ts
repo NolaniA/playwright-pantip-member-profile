@@ -106,9 +106,6 @@ export async function dialogEditBirthday(page:Page,
     const yearDisplay = displayTime.year();
     const monthDisplay = displayTime.format('M');
     const dayDisplay = displayTime.date();
-    console.log('yearDisplay', yearDisplay);
-    console.log('monthDisplay', monthDisplay);
-    console.log('dayDisplay', dayDisplay);
 
     expect(await page.getByLabel('-วัน-').inputValue()).toBe(dayDisplay.toString());
     expect(await page.getByLabel('-เดือน-').inputValue()).toBe(monthDisplay.toString());
@@ -207,7 +204,8 @@ export async function dialogSelectShowBirthday(page:Page, show:boolean = false) 
 
   if (!show) return;
 
-  const toggleShow = dialog.locator('input[data-test-id="show-birthday-status-selected"]');
+  // const toggleShow = dialog.locator('section:nth-child(3) > div.flexbox > div > label > input[data-test-id="show-birthday-status-selected"]');
+  const toggleShow = dialog.locator('section:nth-child(3) > div.flexbox > div > label');
   if (!(await toggleShow.isChecked())) {
     // await toggleShow.check();
     await toggleShow.click();
