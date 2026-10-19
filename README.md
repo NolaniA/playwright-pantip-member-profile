@@ -100,7 +100,7 @@ project/
 Create `.env`
 
 ```env
-BASE_URL=https://stg.pantip.com
+BASE_URL=https://{{domain_name}}
 
 LOGIN_USER=your_user
 LOGIN_PASS=your_password
@@ -204,7 +204,7 @@ npx playwright codegen
 Open specific website:
 
 ```bash
-npx playwright codegen https://stg.pantip.com
+npx playwright codegen https://{{domain_name}}
 ```
 
 ---
